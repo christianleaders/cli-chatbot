@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      assistant_id: "YOUR_ASSISTANT_ID"
+      assistant_id: "asst_j9BznnIC8jpNrsvlsGLRHByg"
     })
   });
 
