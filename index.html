@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <input id="msg" placeholder="Say something..." />
+    <button onclick="send()">Ask</button>
+
+    <div id="reply"></div>
+
+    <script>
+      async function send() {
+        const message = document.getElementById("msg").value;
+
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        document.getElementById("reply").innerText = data.reply;
+      }
+    </script>
+  </body>
+</html>
