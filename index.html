@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>CLI Assistant</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <style>
     * {
       box-sizing: border-box;
@@ -16,7 +16,6 @@
       background: #050509;
       color: #ffffff;
       min-height: 100vh;
-      overscroll-behavior: none; 
     }
 
     .app {
@@ -27,7 +26,6 @@
       flex-direction: column;
     }
 
-    /* HEADER */
     .app-header {
       padding: 32px 16px 16px;
       text-align: center;
@@ -53,7 +51,6 @@
       margin-top: 24px;
     }
 
-    /* CHAT AREA */
     .chat {
       flex: 1;
       padding: 16px;
@@ -101,7 +98,6 @@
       font-style: italic;
     }
 
-    /* COMPOSER */
     .composer {
       position: sticky;
       bottom: 0;
@@ -111,11 +107,11 @@
 
     .composer-inner {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       background: #1e1f23;
       border-radius: 9999px;
       border: 1px solid #2f3137;
-      padding: 10px 16px;
+      padding: 10px 10px 10px 16px;
     }
 
     textarea#message-input {
@@ -124,7 +120,7 @@
       outline: none;
       background: transparent;
       color: #ffffff;
-      font-size: 16px; /* prevents iOS zoom */
+      font-size: 16px;
       line-height: 1.4;
       resize: none;
       max-height: 120px;
@@ -140,9 +136,8 @@
       margin-left: 10px;
       flex-shrink: 0;
       border: none;
-      border-radius: 50%;
-      width: 42px;
-      height: 42px;
+      border-radius: 9999px;
+      padding: 8px 16px;
       background: #0b84ff;
       color: #ffffff;
       font-size: 15px;
@@ -183,12 +178,8 @@
     <div class="composer">
       <form id="chat-form">
         <div class="composer-inner">
-          <textarea
-            id="message-input"
-            rows="1"
-            placeholder="Ask anything..."
-          ></textarea>
-          <button id="send-btn" type="submit">➤</button>
+          <textarea id="message-input" rows="1" placeholder="Ask anything..."></textarea>
+          <button id="send-btn" type="submit">Send</button>
         </div>
       </form>
     </div>
@@ -201,17 +192,18 @@
     const hero = document.getElementById("hero");
     const sendBtn = document.getElementById("send-btn");
 
-    /* NEW — AUTOSCROLL ALWAYS TO BOTTOM */
-    function scrollToBottom() {
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
-
     function autoResize() {
       input.style.height = "auto";
       input.style.height = input.scrollHeight + "px";
     }
 
     input.addEventListener("input", autoResize);
+
+    function scrollToBottom() {
+      setTimeout(() => {
+        chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
+      }, 30);
+    }
 
     function addMessage(text, role, opts = {}) {
       if (hero && hero.style.display !== "none") {
@@ -228,7 +220,7 @@
       row.appendChild(bubble);
       chatEl.appendChild(row);
 
-      scrollToBottom();  // NEW
+      scrollToBottom();
 
       return row;
     }
@@ -255,6 +247,7 @@
         const data = await res.json();
         chatEl.removeChild(thinkingRow);
         addMessage(data.reply || "Sorry, I couldn't understand that.", "assistant");
+
       } catch (err) {
         console.error(err);
         chatEl.removeChild(thinkingRow);
