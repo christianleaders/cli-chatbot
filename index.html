@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>CLI Assistant</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
   <style>
     * {
       box-sizing: border-box;
@@ -16,47 +18,24 @@
       background: #050509;
       color: #ffffff;
       min-height: 100vh;
+      overflow: hidden;
+      touch-action: manipulation;
     }
 
     .app {
-      min-height: 100vh;
+      height: 100vh;
       max-width: 900px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
     }
 
-    .app-header {
-      padding: 32px 16px 16px;
-      text-align: center;
-    }
-
-    .app-header img {
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto 16px;
-    }
-
-    .app-title {
-      font-size: 22px;
-      font-weight: 600;
-    }
-
-    .hero {
-      text-align: center;
-      color: #a0a0a7;
-      font-size: 18px;
-      margin-top: 24px;
-    }
-
     .chat {
       flex: 1;
-      padding: 16px;
-      padding-bottom: 8px;
       overflow-y: auto;
-      scroll-behavior: smooth;
+      padding: 16px;
+      padding-bottom: 80px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .message-row {
@@ -98,20 +77,24 @@
       font-style: italic;
     }
 
+    /* --- BOTTOM BAR (ChatGPT style) --- */
     .composer {
-      position: sticky;
+      position: fixed;
       bottom: 0;
-      padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
-      background: linear-gradient(to top, #050509, rgba(5, 5, 9, 0.9), transparent);
+      left: 0;
+      right: 0;
+      padding: 16px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, #050509, rgba(5, 5, 9, 0.95), transparent);
     }
 
     .composer-inner {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       background: #1e1f23;
-      border-radius: 9999px;
       border: 1px solid #2f3137;
-      padding: 10px 10px 10px 16px;
+      border-radius: 30px;
+      padding: 10px 12px;
     }
 
     textarea#message-input {
@@ -120,12 +103,15 @@
       outline: none;
       background: transparent;
       color: #ffffff;
-      font-size: 16px; /* prevents iOS zoom */
-      line-height: 1.4;
+      font-size: 16px;
       resize: none;
+      min-height: 24px;
       max-height: 120px;
-      min-height: 20px;
-      padding: 0;
+
+      /* 🔥 PERFECT VERTICAL CENTERING FIX */
+      line-height: 22px;
+      padding-top: 6px;
+      padding-bottom: 6px;
     }
 
     textarea#message-input::placeholder {
@@ -136,54 +122,35 @@
       margin-left: 10px;
       flex-shrink: 0;
       border: none;
-      border-radius: 9999px;
-      padding: 8px 16px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
       background: #0b84ff;
-      color: #ffffff;
-      font-size: 15px;
+      color: white;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      touch-action: manipulation; /* 🆕 prevents Safari zoom */
     }
 
     #send-btn:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: default;
-    }
-
-    @media (min-width: 768px) {
-      .composer-inner {
-        max-width: 720px;
-        margin: 0 auto;
-      }
-      .chat {
-        padding-inline: 40px;
-      }
     }
   </style>
 </head>
+
 <body>
   <div class="app">
-    <header class="app-header">
-      <img src="CL_Logo_Symbol_CMYK.png" alt="CLI Logo" />
-      <div class="app-title">CLI Assistant</div>
-      <div id="hero" class="hero">What can I help with?</div>
-    </header>
-
     <main id="chat" class="chat"></main>
 
     <div class="composer">
       <form id="chat-form">
         <div class="composer-inner">
-          <textarea
-            id="message-input"
-            rows="1"
-            placeholder="Ask anything..."
-          ></textarea>
-          <button id="send-btn" type="submit">Send</button>
+          <textarea id="message-input" rows="1" placeholder="Ask anything..."></textarea>
+          <button id="send-btn" type="submit">➤</button>
         </div>
       </form>
     </div>
@@ -193,7 +160,6 @@
     const chatEl = document.getElementById("chat");
     const form = document.getElementById("chat-form");
     const input = document.getElementById("message-input");
-    const hero = document.getElementById("hero");
     const sendBtn = document.getElementById("send-btn");
 
     function autoResize() {
@@ -204,10 +170,6 @@
     input.addEventListener("input", autoResize);
 
     function addMessage(text, role, opts = {}) {
-      if (hero && hero.style.display !== "none") {
-        hero.style.display = "none"; 
-      }
-
       const row = document.createElement("div");
       row.className = `message-row ${role} ${opts.thinking ? "assistant thinking" : ""}`;
 
@@ -244,12 +206,6 @@
         const data = await res.json();
         chatEl.removeChild(thinkingRow);
         addMessage(data.reply || "Sorry, I couldn't understand that.", "assistant");
-
-        /* 🆕 Fix viewport jump on iOS after sending */
-        setTimeout(() => {
-          window.scrollTo(0, document.body.scrollHeight);
-        }, 50);
-
       } catch (err) {
         console.error(err);
         chatEl.removeChild(thinkingRow);
