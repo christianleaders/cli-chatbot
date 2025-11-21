@@ -27,8 +27,7 @@
       flex-direction: column;
     }
 
-    /* ▀▀▀ TOP SECTION (RESTORED EXACTLY LIKE BEFORE) ▀▀▀ */
-
+    /* TOP SECTION */
     .app-header {
       padding: 32px 16px 16px;
       text-align: center;
@@ -56,7 +55,6 @@
     }
 
     /* CHAT */
-
     .chat {
       flex: 1;
       padding: 16px;
@@ -99,13 +97,32 @@
       border-bottom-left-radius: 4px;
     }
 
-    .assistant.thinking .bubble {
-      opacity: 0.7;
-      font-style: italic;
+    /* --- Animated typing bubble --- */
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
     }
 
-    /* ▀▀▀ BOTTOM BAR — KEEP EXACTLY HOW IT WAS (NO ZOOM, CENTERED) ▀▀▀ */
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      background: #ffffff;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: blink 1.4s infinite;
+    }
 
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%   { opacity: 0.3; }
+      50%  { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+
+    /* BOTTOM BAR */
     .composer {
       position: sticky;
       bottom: 0;
@@ -129,7 +146,7 @@
       outline: none;
       background: transparent;
       color: #ffffff;
-      font-size: 16px; /* prevents iOS zoom */
+      font-size: 16px;
       line-height: 1.4;
       resize: none;
       max-height: 120px;
@@ -174,8 +191,7 @@
 </head>
 <body>
   <div class="app">
-    
-    <!-- ▀▀▀ RESTORED TOP SECTION ▀▀▀ -->
+
     <header class="app-header">
       <img src="CL_Logo_Symbol_CMYK.png" alt="CLI Logo" />
       <div class="app-title">CLI Assistant</div>
@@ -184,15 +200,10 @@
 
     <main id="chat" class="chat"></main>
 
-    <!-- ▀▀▀ BOTTOM BAR (NO CHANGES MADE) ▀▀▀ -->
     <div class="composer">
       <form id="chat-form">
         <div class="composer-inner">
-          <textarea
-            id="message-input"
-            rows="1"
-            placeholder="Ask anything..."
-          ></textarea>
+          <textarea id="message-input" rows="1" placeholder="Ask anything..."></textarea>
           <button id="send-btn" type="submit">➤</button>
         </div>
       </form>
@@ -210,20 +221,28 @@
       input.style.height = "auto";
       input.style.height = input.scrollHeight + "px";
     }
-
     input.addEventListener("input", autoResize);
 
     function addMessage(text, role, opts = {}) {
       if (hero && hero.style.display !== "none") {
-        hero.style.display = "none"; // hide hero after first message
+        hero.style.display = "none";
       }
 
       const row = document.createElement("div");
-      row.className = `message-row ${role} ${opts.thinking ? "assistant thinking" : ""}`;
+      row.className = `message-row ${role}`;
 
       const bubble = document.createElement("div");
       bubble.className = "bubble";
-      bubble.textContent = text;
+
+      if (opts.typing) {
+        bubble.innerHTML = `
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        `;
+      } else {
+        bubble.textContent = text;
+      }
 
       row.appendChild(bubble);
       chatEl.appendChild(row);
@@ -242,7 +261,8 @@
       autoResize();
 
       sendBtn.disabled = true;
-      const thinkingRow = addMessage("Thinking…", "assistant", { thinking: true });
+
+      const typingRow = addMessage("", "assistant", { typing: true });
 
       try {
         const res = await fetch("/api/chat", {
@@ -252,12 +272,14 @@
         });
 
         const data = await res.json();
-        chatEl.removeChild(thinkingRow);
+        chatEl.removeChild(typingRow);
         addMessage(data.reply || "Sorry, I couldn't understand that.", "assistant");
+
       } catch (err) {
         console.error(err);
-        chatEl.removeChild(thinkingRow);
+        chatEl.removeChild(typingRow);
         addMessage("Something went wrong. Please try again.", "assistant");
+
       } finally {
         sendBtn.disabled = false;
       }
